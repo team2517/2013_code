@@ -3,7 +3,6 @@
 	<name>2013_code</name>
 	<comment></comment>
 	<projects>
-		<project>WPILib</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -1,0 +1,41 @@
+#include "WPILib.h"
+
+class DefaultRobot : public SimpleRobot{
+	Joystick joystick;
+	CANJaguar jag3;
+	CANJaguar jag4;
+
+
+public:
+	DefaultRobot(void):
+		joystick(1),
+		jag3(3),
+		jag4(4)
+	{
+		Watchdog().SetExpiration(1);
+	}
+	
+		void Autonomous(void){
+			
+		}
+
+		void OperatorControl(void){
+			Watchdog().SetEnabled(true);
+			while(IsOperatorControl()){
+				if (joystick.GetRawAxis(4) > 0.2 || joystick.GetRawAxis(4) < -0.2) { //Deadband of .2
+					jag3.Set(-(joystick.GetRawAxis(4))+.1); //Run left motors based on left stick value.
+				} else {
+					jag3.Set(0); //Set the motors to 0.
+				}
+							
+				if (joystick.GetRawAxis(2) > .2 || joystick.GetRawAxis(2) < -.2) { //Deadband of .2
+					jag4.Set(joystick.GetRawAxis(2)-.1); //Run right motors based on right stick value
+				} else {
+					jag4.Set(0); //Set the right drive motors to 0.
+				}
+			}
+		}
+
+};
+
+START_ROBOT_CLASS(DefaultRobot);

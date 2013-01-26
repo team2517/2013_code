@@ -1,0 +1,77 @@
+#include "WPILib.h"
+
+class DefaultRobot : public SimpleRobot{
+	Joystick joystick;
+	Jaguar leftDriveJag;
+	Jaguar rightDriveJag;
+	Jaguar combineJag;
+	Servo servo;
+	Encoder encoderL;
+	Encoder encoderR;
+	
+	
+	
+	
+public: 
+	DefaultRobot(void):
+		joystick(1), 
+		leftDriveJag(1), 
+		rightDriveJag(2), 
+		combineJag(3),
+		servo(6),
+		encoderL(3, 4, false, Encoder::k4X),
+		encoderR(1, 2, false, Encoder::k4X)
+		
+		{
+				Watchdog().SetExpiration(2);
+		}
+	
+	void Autonomous(void){
+		
+		
+	}
+	
+	void OperatorControl(void){
+		Watchdog().SetEnabled(true);
+		encoderL.Start();
+		encoderR.Start();
+		encoderL.SetDistancePerPulse(1.00);
+		encoderR.SetDistancePerPulse(1.00);
+		while(IsOperatorControl()){
+			Watchdog().Feed();
+			//Operator Controlx
+			printf("%f\n", encoderR.GetRate());
+			printf("%f\n", encoderL.GetRate());
+			if (joystick.GetRawAxis(4) > 0.2 || joystick.GetRawAxis(4) < -0.2) { //Deadband of .2
+				leftDriveJag.Set(-(joystick.GetRawAxis(4))+.1); //Run left motors based on left stick value.
+			} else {
+				leftDriveJag.Set(0); //Set the motors to 0.
+			}
+			
+			if (joystick.GetRawAxis(2) > .2 || joystick.GetRawAxis(2) < -.2) { //Deadband of .2
+				rightDriveJag.Set(joystick.GetRawAxis(2)-.1); //Run right motors based on right stick value
+			} else {
+				rightDriveJag.Set(0); //Set the right drive motors to 0.
+			}
+			
+			if (joystick.GetRawButton(2)){
+				combineJag.Set(-1);
+			} else if(joystick.GetRawButton(3)) {
+				combineJag.Set(-.75);
+			} else {
+				combineJag.Set(0);
+			}
+			
+			
+			if(joystick.GetRawButton(6)){
+				servo.Set(0);
+			} else {
+				servo.Set(1);
+			}
+			Watchdog().Feed();
+		}
+	}
+	
+};
+
+START_ROBOT_CLASS(DefaultRobot);
