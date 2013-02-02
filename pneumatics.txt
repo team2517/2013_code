@@ -1,0 +1,58 @@
+#include "WPILib.h"
+
+class DefaultRobot : public SimpleRobot{
+	Joystick joystick;
+	Solenoid test1A;
+	Solenoid test1B;
+	Solenoid test2A;
+	Solenoid test2B;
+	Compressor compressor;
+	
+public:
+	DefaultRobot(void):
+		joystick(1),
+		test1A(1),
+		test1B(2),
+		test2A(3),
+		test2B(4),
+		compressor(1, 1)
+	{
+		Watchdog().SetExpiration(1);
+		compressor.Start();
+	}
+	
+	void Autonomous(void){
+		
+	}
+	
+	void OperatorControl(void){
+		Watchdog().SetEnabled(true);
+		/*
+		test1A.Set(false);
+		test1B.Set(true);
+		test2A.Set(false);
+		*/
+		while(IsOperatorControl()){
+			if(joystick.GetRawButton(1)){
+				test1A.Set(false);
+				test1B.Set(true);
+			}else{
+				test1A.Set(true);
+				test1B.Set(false);
+			}
+			if(joystick.GetRawButton(2)){
+				test2A.Set(true);
+			} else {
+				test2A.Set(false);
+			}
+			if(joystick.GetRawButton(3)){
+				test2B.Set(true);
+			}else{
+				test2B.Set(false);
+			}
+		}
+	}
+		
+};
+
+START_ROBOT_CLASS(DefaultRobot);

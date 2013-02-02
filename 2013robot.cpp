@@ -64,8 +64,7 @@ public:
 					} else if (leftJoyX<0){
 						theta = PI;
 					}
-				}
-				else if((leftJoyX == 0)&&(leftJoyY!=0)){
+				} else if((leftJoyX == 0)&&(leftJoyY!=0)){
 					if(leftJoyY>0){
 						theta = PI/2;
 					} else if (leftJoyY<0){
