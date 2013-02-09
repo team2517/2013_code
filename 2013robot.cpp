@@ -3,11 +3,21 @@
 #define PI 3.14159265
 
 class DefaultRobot : public SimpleRobot {
-	Joystick joystick;
+	Joystick driveJoy;
+	Joystick shootJoy;
 	CANJaguar jagA;
 	CANJaguar jagB;
 	CANJaguar jagC;
 	CANJaguar jagD;
+	CANJaguar shootRear;
+	CANJaguar shootFront;
+	Solenoid lifterA;
+	Solenoid lifterB;
+	Solenoid suctionA;
+	Solenoid suctionB;
+	Solenoid hopperGateA;
+	Solenoid hopperGateB;
+	Compressor compressor;
 	double theta;
 	double radius;
 	double phi;
@@ -25,14 +35,24 @@ public:
 		 * 6 = red = c
 		 * 11 = white = a
 		 * 10 = yellow = b
+		 * 
+		 * Missing shooter motors and hopper gate solenoid
 		 */
-		joystick(1),
+		driveJoy(1),
+		shootJoy(2),
 		jagA(11), //invert
 		jagB(10), //invert
 		jagC(6),
-		jagD(3)
+		jagD(3),
+		lifterA(1),
+		lifterB(2),
+		suctionA(3),
+		suctionB(4),
+		compressor(1, 1)
+		
 	{
 		Watchdog().SetExpiration(1);
+		compressor.Start();
 	}
 	
 	void Autonomous(void){
@@ -43,9 +63,9 @@ public:
 		Watchdog().SetEnabled(true);
 		
 		while(IsOperatorControl()){
-			phi = joystick.GetRawAxis(3);
-			leftJoyX = joystick.GetRawAxis(1);
-			leftJoyY = -joystick.GetRawAxis(2);
+			phi = driveJoy.GetRawAxis(3);
+			leftJoyX = driveJoy.GetRawAxis(1);
+			leftJoyY = -driveJoy.GetRawAxis(2);
 			radius = sqrt(pow(leftJoyX, 2) + pow(leftJoyY, 2));
 			theta = atan((leftJoyY)/(leftJoyX));
 			
@@ -75,12 +95,13 @@ public:
 				}
 			}
 			
+			//Power equations
 			outA = ((radius)*(sin(theta+(PI/4)))+phi);
 			outB = ((radius)*(cos(theta+(PI/4)))+phi);
 			outC = ((radius)*(cos(theta+(PI/4)))-phi);
 			outD = ((radius)*(sin(theta+(PI/4)))-phi);
 			
-			
+			//Motor output
 			if(outA > 1){
 				jagA.Set(-1);
 			} else if(outA < -1){
@@ -110,9 +131,44 @@ public:
 				jagD.Set(outD);
 			}
 			
+			/*
+			 * Diagnostics output
 			printf("x: %f y: %f  phi: %f\n", leftJoyX, leftJoyY,phi);
 			printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			printf("theta: %f radius: %f\n", theta,radius);
+			*/
+			
+			//Pneumatics
+			if(driveJoy.GetRawButton(1)){
+				lifterA.Set(false);
+				lifterB.Set(true);
+			}else{
+				lifterA.Set(true);
+				lifterB.Set(false);
+			}
+			if(driveJoy.GetRawButton(2)){
+				suctionA.Set(true);
+			} else {
+				suctionA.Set(false);
+			}
+			if(driveJoy.GetRawButton(3)){
+				suctionB.Set(true);
+			}else{
+				suctionB.Set(false);
+			}
+			
+			//Shooter
+			if(shootJoy.GetRawAxis(2)>.2){
+				shootFront.Set(shootJoy.GetRawAxis(2));
+				shootRear.Set(shootJoy.GetRawAxis(2));
+			}
+			if(shootJoy.GetRawButton(1)){
+				hopperGateA.Set(true);
+				hopperGateB.Set(false);
+			}else{
+				hopperGateA.Set(false);
+				hopperGateB.Set(true);
+			}
 			
 			/*
 			jagA.Set((radius)*(sin(theta))+phi);
