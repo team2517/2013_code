@@ -36,7 +36,7 @@ public:
 		 * 11 = white = a
 		 * 10 = yellow = b
 		 * 
-		 * Missing shooter motors and hopper gate solenoid
+		 * hopper gate solenoid have placeholder values
 		 */
 		driveJoy(1),
 		shootJoy(2),
@@ -44,10 +44,14 @@ public:
 		jagB(10), //invert
 		jagC(6),
 		jagD(3),
+		shootFront(2),
+		shootRear(7),
 		lifterA(1),
 		lifterB(2),
 		suctionA(3),
 		suctionB(4),
+		hopperGateA(7),
+		hopperGateB(8),
 		compressor(1, 1)
 		
 	{
