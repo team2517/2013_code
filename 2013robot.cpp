@@ -1,5 +1,6 @@
 #include "WPIlib.h"
 #include "Math.h"
+#include "CANJaguar.h"
 #define PI 3.14159265
 
 class DefaultRobot : public SimpleRobot {
@@ -9,8 +10,8 @@ class DefaultRobot : public SimpleRobot {
 	CANJaguar jagB;
 	CANJaguar jagC;
 	CANJaguar jagD;
-	CANJaguar shootRear;
 	CANJaguar shootFront;
+	CANJaguar shootRear;
 	Solenoid lifterA;
 	Solenoid lifterB;
 	Solenoid suctionA;
@@ -44,8 +45,8 @@ public:
 		jagB(10), //invert
 		jagC(6),
 		jagD(3),
-		shootFront(2),
-		shootRear(7),
+		shootFront(7),
+		shootRear(2),
 		lifterA(1),
 		lifterB(2),
 		suctionA(3),
@@ -65,6 +66,33 @@ public:
 	
 	void OperatorControl(void){
 		Watchdog().SetEnabled(true);
+		
+		/*
+		jagA.ChangeControlMode(jagA.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagA.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagB.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagB.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagC.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagC.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagD.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagD.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		*/
 		
 		while(IsOperatorControl()){
 			phi = driveJoy.GetRawAxis(3);
@@ -135,12 +163,11 @@ public:
 				jagD.Set(outD);
 			}
 			
-			/*
-			 * Diagnostics output
+			//Diagnostics output
 			printf("x: %f y: %f  phi: %f\n", leftJoyX, leftJoyY,phi);
-			printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
+			printf("a: %f b: %f c: %f d: %f\n", outA, outB, outC, outD);
 			printf("theta: %f radius: %f\n", theta,radius);
-			*/
+			//printf("Axis 2: %f", shootJoy.GetRawAxis(2));
 			
 			//Pneumatics
 			if(driveJoy.GetRawButton(1)){
@@ -162,9 +189,12 @@ public:
 			}
 			
 			//Shooter
-			if(shootJoy.GetRawAxis(2)>.2){
-				shootFront.Set(shootJoy.GetRawAxis(2));
-				shootRear.Set(shootJoy.GetRawAxis(2));
+			if(shootJoy.GetRawAxis(2)<-.2){
+				shootFront.Set((shootJoy.GetRawAxis(2)));
+				shootRear.Set((shootJoy.GetRawAxis(2)));
+			}else{
+				shootFront.Set(0);
+				shootRear.Set(0);
 			}
 			if(shootJoy.GetRawButton(1)){
 				hopperGateA.Set(true);
