@@ -46,8 +46,35 @@ public:
 			phi = joystick.GetRawAxis(3);
 			leftJoyX = joystick.GetRawAxis(1);
 			leftJoyY = -joystick.GetRawAxis(2);
+			
+			//Left joystick strafe tolerance
+			if((-.1<leftJoyX)&&(leftJoyX<.1)){
+				leftJoyX = 0;
+			}
+			if((-.1<leftJoyY)&&(leftJoyY<.1)){
+				leftJoyY = 0;
+			}
+			
 			radius = sqrt(pow(leftJoyX, 2) + pow(leftJoyY, 2));
-			theta = atan((leftJoyY)/(leftJoyX));
+			
+			//theta NaN handling
+			if((leftJoyY == 0)&&(leftJoyX != 0)){
+				if(leftJoyX > 0){
+					theta = 0;
+				} else if (leftJoyX < 0){
+					theta = PI;
+				}
+			}
+			else if((leftJoyX == 0)&&(leftJoyY != 0)){
+				if(leftJoyY > 0){
+					theta = PI/2;
+				} else if (leftJoyY < 0){
+					theta = (3*PI)/2;
+				}
+			} else {
+				theta = atan((leftJoyY)/(leftJoyX));
+			}
+			
 			
 			//if in Quadrant 2 or 3 add 180 degrees, if in Quadrant 4 add 360
 			if(((leftJoyX<0)&&(leftJoyY>0))||((leftJoyX<0)&&(leftJoyY<0))){ 
@@ -56,25 +83,23 @@ public:
 				theta += (2*PI);
 			}
 			
-			//theta NaN handling
-			if(theta != theta){
-				if((leftJoyY == 0)&&(leftJoyX!=0)){
-					if(leftJoyX>0){
-						theta = 0;
-					} else if (leftJoyX<0){
-						theta = PI;
-					}
-				}
-				else if((leftJoyX == 0)&&(leftJoyY!=0)){
-					if(leftJoyY>0){
-						theta = PI/2;
-					} else if (leftJoyY<0){
-						theta = (3*PI)/2;
-					}
-				} else {
-					theta = 0;
-				}
+			
+			
+			if (joystick.GetRawButton(3)) {
+				theta = 0;
+				radius = .5;
+			} else if (joystick.GetRawButton(4)) {
+				theta = PI / 2;
+				radius = .35;
+			} else if (joystick.GetRawButton(1)) {
+				theta = PI;
+				radius = .5;
+			} else if (joystick.GetRawButton(2)) {
+				theta = (3 * PI) / 2;
+				radius = .35;
 			}
+			
+			
 			
 			outA = ((radius)*(sin(theta+(PI/4)))+phi);
 			outB = ((radius)*(cos(theta+(PI/4)))+phi);
@@ -112,7 +137,7 @@ public:
 			}
 			
 			printf("x: %f y: %f  phi: %f\n", leftJoyX, leftJoyY,phi);
-			printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
+			//("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			printf("theta: %f radius: %f\n", theta,radius);
 			
 			/*
