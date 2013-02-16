@@ -29,14 +29,15 @@ class DefaultRobot: public SimpleRobot {
 	double outC;
 	double outD;
 	double shooterSpeed;
-
 public:
 	DefaultRobot(void) :
 		/*
-		 * 3 = green = d
-		 * 6 = red = c
-		 * 11 = white = a
-		 * 10 = yellow = b
+		 * 3 = green   = d = rear right 
+		 * 6 = red     = c = rear left
+		 * 11 = white  = a = front left
+		 * 10 = yellow = b = front right
+		 * 
+		 * hopper gate solenoid have placeholder values
 		 */
 		joystick(1), 
 		jagA(11), //invert
@@ -66,31 +67,32 @@ public:
 	void OperatorControl(void) {
 		Watchdog().SetEnabled(true);
 		/*
-		 jagA.ChangeControlMode(jagA.kSpeed);
-		 jagA.ConfigEncoderCodesPerRev(360);
-		 jagA.EnableControl();
-		 jagA.ChangeControlMode(jagA.kPercentVbus);
-		 jagA.EnableControl();
-		 Watchdog().Feed();
-		 jagA.ChangeControlMode(jagB.kSpeed);
-		 jagA.ConfigEncoderCodesPerRev(360);
-		 jagA.EnableControl();
-		 jagA.ChangeControlMode(jagB.kPercentVbus);
-		 jagA.EnableControl();
-		 Watchdog().Feed();
-		 jagA.ChangeControlMode(jagC.kSpeed);
-		 jagA.ConfigEncoderCodesPerRev(360);
-		 jagA.EnableControl();
-		 jagA.ChangeControlMode(jagC.kPercentVbus);
-		 jagA.EnableControl();
-		 Watchdog().Feed();
-		 jagA.ChangeControlMode(jagD.kSpeed);
-		 jagA.ConfigEncoderCodesPerRev(360);
-		 jagA.EnableControl();
-		 jagA.ChangeControlMode(jagD.kPercentVbus);
-		 jagA.EnableControl();
-		 Watchdog().Feed();
-		 */
+		jagA.ChangeControlMode(jagA.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagA.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagB.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagB.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagC.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagC.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagD.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagD.kPercentVbus);
+		jagA.EnableControl();
+		*/
+		Watchdog().Feed();
+		shooterSpeed = 0.0;
 
 		while (IsOperatorControl()) {
 			phi = joystick.GetRawAxis(3);
