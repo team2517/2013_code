@@ -8,6 +8,15 @@ class DefaultRobot: public SimpleRobot {
 	CANJaguar jagB;
 	CANJaguar jagC;
 	CANJaguar jagD;
+	CANJaguar shootFront;
+	CANJaguar shootRear;
+	Solenoid lifterA;
+	Solenoid lifterB;
+	Solenoid suctionA;
+	Solenoid suctionB;
+	Solenoid hopperGateA;
+	Solenoid hopperGateB;
+	Compressor compressor;
 	double theta;
 	double radius;
 	double phi;
@@ -17,20 +26,35 @@ class DefaultRobot: public SimpleRobot {
 	double outB;
 	double outC;
 	double outD;
+	double shooterRPM;
 
 public:
 	DefaultRobot(void) :
 		/*
-		 * 3 = green = d
-		 * 6 = red = c
-		 * 11 = white = a
-		 * 10 = yellow = b
+		 * 3 = green   = d = rear right 
+		 * 6 = red     = c = rear left
+		 * 11 = white  = a = front left
+		 * 10 = yellow = b = front right
+		 * 
+		 * hopper gate solenoid have placeholder values
 		 */
-		joystick(1), jagA(11), //invert
-				jagB(10), //invert
-				jagC(6), jagD(3) 
+		joystick(1),
+		jagA(11), //invert
+		jagB(10), //invert
+		jagC(6),
+		jagD(3),
+		shootFront(7),
+		shootRear(2),
+		lifterA(1),
+		lifterB(2),
+		suctionA(3),
+		suctionB(4),
+		hopperGateA(7),
+		hopperGateB(8),
+		compressor(1, 1)
 	{
 		Watchdog().SetExpiration(1);
+		compressor.Start();
 	}
 
 	void Autonomous(void) {
@@ -39,7 +63,33 @@ public:
 
 	void OperatorControl(void) {
 		Watchdog().SetEnabled(true);
-
+		/*
+		jagA.ChangeControlMode(jagA.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagA.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagB.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagB.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagC.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagC.kPercentVbus);
+		jagA.EnableControl();
+		Watchdog().Feed();
+		jagA.ChangeControlMode(jagD.kSpeed);
+		jagA.ConfigEncoderCodesPerRev(360);
+		jagA.EnableControl();
+		jagA.ChangeControlMode(jagD.kPercentVbus);
+		jagA.EnableControl();
+		*/
+		Watchdog().Feed();
+		shooterRPM = 0.0;
 		while (IsOperatorControl()) {
 			phi = joystick.GetRawAxis(3);
 			leftJoyX = joystick.GetRawAxis(1);
@@ -135,13 +185,24 @@ public:
 			printf("x: %f y: %f phi: %f\n", leftJoyX, leftJoyY, phi);
 			//("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			//printf("theta: %f radius: %f\n", theta, radius);
-
-			/*
-			 jagA.Set((radius)*(sin(theta))+phi);
-			 jagB.Set((radius)*(cos(theta))-phi);
-			 jagC.Set((radius)*(cos(theta))+phi);
-			 jagD.Set((radius)*(sin(theta))-phi);
-			 */
+			
+			//Shooter
+			if(joystick.GetRawButton(1)){
+				shooterRPM = 1.0;
+			}
+			if(joystick.GetRawButton(4)){
+				shooterRPM = 0;
+			}
+			if(joystick.GetRawButton(2)){
+				shooterRPM += 0.05;
+			}
+			if(joystick.GetRawButton(3)){
+				shooterRPM -= 0.05;
+			}
+			if(shooterRPM>1.0){shooterRPM=1.0;}
+			else if(shooterRPM<0){shooterRPM=0.0}
+			shootFront.Set(shooterRPM);
+			shootRear.Set(shooterRPM);
 			Watchdog().Feed();
 		}
 	}
