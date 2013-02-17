@@ -2,6 +2,7 @@
 #include "Math.h"
 #define PI 3.14159265
 
+
 class DefaultRobot: public SimpleRobot {
 	Joystick joystick;
 	CANJaguar jagA;
@@ -10,14 +11,14 @@ class DefaultRobot: public SimpleRobot {
 	CANJaguar jagD;
 	CANJaguar shootFront;
 	CANJaguar shootRear;
-	Solenoid lifterA;
-	Solenoid lifterB;
 	Solenoid suctionA;
 	Solenoid suctionB;
-	Solenoid hopperGateA;
-	Solenoid hopperGateB;
 	Solenoid loaderA;
 	Solenoid loaderB;
+	Solenoid hopperGateA;
+	Solenoid hopperGateB;
+	Solenoid lifterA;
+	Solenoid lifterB;
 	Compressor compressor;
 	double theta;
 	double radius;
@@ -29,6 +30,8 @@ class DefaultRobot: public SimpleRobot {
 	double outC;
 	double outD;
 	double shooterSpeed;
+	bool button3Pressed;
+	bool button2Pressed;
 public:
 	DefaultRobot(void) :
 		/*
@@ -46,18 +49,19 @@ public:
 		jagD(3),
 		shootFront(7),
 		shootRear(2),
-		lifterA(1),
-		lifterB(2),
-		suctionA(3),
-		suctionB(4),
-		loaderA(5),
-		loaderB(6),
-		hopperGateA(7),
-		hopperGateB(8),
+		suctionA(1),
+		suctionB(2),
+		loaderA(3),
+		loaderB(4),
+		hopperGateA(5),
+		hopperGateB(6),
+		lifterA(7),
+		lifterB(8),
 		compressor(1, 1)
 	{
 		Watchdog().SetExpiration(1);
 		compressor.Start();
+		
 	}
 
 	void Autonomous(void) {
@@ -66,6 +70,7 @@ public:
 
 	void OperatorControl(void) {
 		Watchdog().SetEnabled(true);
+		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
 		/*
 		jagA.ChangeControlMode(jagA.kSpeed);
 		jagA.ConfigEncoderCodesPerRev(360);
@@ -93,8 +98,11 @@ public:
 		*/
 		Watchdog().Feed();
 		shooterSpeed = 0.0;
-
+		button3Pressed = false;
+		button2Pressed = false;
+		
 		while (IsOperatorControl()) {
+			
 			phi = joystick.GetRawAxis(3);
 			leftJoyX = joystick.GetRawAxis(1);
 			leftJoyY = -joystick.GetRawAxis(2);
@@ -192,37 +200,67 @@ public:
 			}
 			
 			//Pneumatics
-			if(joystick.GetRawButton(7)){
-				loaderA.Set(false);
-				loaderB.Set(true);
-			}else{
+			if(joystick.GetRawButton(6)){
 				loaderA.Set(true);
 				loaderB.Set(false);
+			}else{
+				loaderA.Set(false);
+				loaderB.Set(true);
 			}
-			
-			
+			if(joystick.GetRawButton(8)){
+				hopperGateA.Set(true);
+				hopperGateB.Set(false);
+			}else{
+				hopperGateA.Set(false);
+				hopperGateB.Set(true);
+			}
+			if(joystick.GetRawButton(5)){
+				lifterA.Set(true);
+				lifterB.Set(false);
+			}else{
+				lifterA.Set(false);
+				lifterB.Set(true);
+			}
+			if(joystick.GetRawButton(7)){
+				suctionA.Set(true);
+				suctionB.Set(false);
+			}else{
+				suctionA.Set(false);
+				suctionB.Set(true);
+			}
 
 			//Shooter
-			if(joystick.GetRawButton(1) && shooterSpeed < 1){
+			if(joystick.GetRawButton(3) && shooterSpeed < 1 && button3Pressed == false){
 				shooterSpeed += .1;
+				button3Pressed = true;
+			} else if(joystick.GetRawButton(3)==false){
+				button3Pressed = false;
 			}
-			if(joystick.GetRawButton(2) && shooterSpeed > 0){
+			if(joystick.GetRawButton(2) && shooterSpeed > 0 && button2Pressed == false){
 				shooterSpeed -= .1;
+				button2Pressed = true;
+			} else if(joystick.GetRawButton(2)==false){
+				button2Pressed = false;
 			}
 			if(joystick.GetRawButton(4)){
-				shootFront.Set(shooterSpeed);
-				shootRear.Set(shooterSpeed);
+				shooterSpeed = 1;
 			}
-			if(joystick.GetRawButton(3)){
-				shootFront.Set(0);
-				shootRear.Set(0);
+			if(joystick.GetRawButton(1)){
+				shooterSpeed = .2;
 			}
+			if(joystick.GetRawButton(10)){
+				shooterSpeed = 0;
+			}
+			shootFront.Set(-shooterSpeed);
+			shootRear.Set(-shooterSpeed);
 
 			//Diagnostics output
 			//printf("x: %f y: %f phi: %f\n", leftJoyX, leftJoyY, phi);
 			//printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			//printf("theta: %f radius: %f\n", theta, radius);
-
+			
+			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Throttle: %f", shooterSpeed);
+			dsLCD->UpdateLCD();
 			Watchdog().Feed();
 		}
 	}
