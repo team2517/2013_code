@@ -5,10 +5,12 @@
 
 class DefaultRobot: public SimpleRobot {
 	Joystick joystick;
+	Joystick joystick2;
 	CANJaguar jagA;
 	CANJaguar jagB;
 	CANJaguar jagC;
 	CANJaguar jagD;
+	CANJaguar jagWindowMotor;
 	CANJaguar shootFront;
 	CANJaguar shootRear;
 	Solenoid suctionA;
@@ -19,7 +21,10 @@ class DefaultRobot: public SimpleRobot {
 	Solenoid hopperGateB;
 	Solenoid lifterA;
 	Solenoid lifterB;
+	AnalogChannel encoder;
 	Compressor compressor;
+	Timer timer;
+	int lifterStep;
 	double theta;
 	double radius;
 	double phi;
@@ -30,8 +35,11 @@ class DefaultRobot: public SimpleRobot {
 	double outC;
 	double outD;
 	double shooterSpeed;
+	double armPosition;
+	double targetPosition;
 	bool button3Pressed;
 	bool button2Pressed;
+	bool lifterStart;
 public:
 	DefaultRobot(void) :
 		/*
@@ -43,10 +51,12 @@ public:
 		 * hopper gate solenoid have placeholder values
 		 */
 		joystick(1), 
+		joystick2(2),
 		jagA(11), //invert
 		jagB(10), //invert
 		jagC(6), 
 		jagD(3),
+		jagWindowMotor(4),
 		shootFront(7),
 		shootRear(2),
 		suctionA(1),
@@ -57,6 +67,7 @@ public:
 		hopperGateB(6),
 		lifterA(7),
 		lifterB(8),
+		encoder(1),
 		compressor(1, 1)
 	{
 		Watchdog().SetExpiration(1);
@@ -70,6 +81,7 @@ public:
 
 	void OperatorControl(void) {
 		Watchdog().SetEnabled(true);
+		timer.Start();
 		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
 		/*
 		jagA.ChangeControlMode(jagA.kSpeed);
@@ -98,8 +110,10 @@ public:
 		*/
 		Watchdog().Feed();
 		shooterSpeed = 0.0;
+		lifterStep = 0;
 		button3Pressed = false;
 		button2Pressed = false;
+		lifterStart = false;
 		
 		while (IsOperatorControl()) {
 			
@@ -162,7 +176,8 @@ public:
 				radius = .35;
 			}
 			*/
-
+			
+			
 			//Power equations
 			outA = ((radius) * (sin(theta + (PI / 4))) + phi);
 			outB = ((radius) * (cos(theta + (PI / 4))) + phi);
@@ -214,6 +229,7 @@ public:
 				hopperGateA.Set(false);
 				hopperGateB.Set(true);
 			}
+			/*
 			if(joystick.GetRawButton(5)){
 				lifterA.Set(true);
 				lifterB.Set(false);
@@ -228,8 +244,9 @@ public:
 				suctionA.Set(false);
 				suctionB.Set(true);
 			}
-
+			*/
 			//Shooter
+			
 			if(joystick.GetRawButton(3) && shooterSpeed < 1 && button3Pressed == false){
 				shooterSpeed += .1;
 				button3Pressed = true;
@@ -253,13 +270,107 @@ public:
 			}
 			shootFront.Set(-shooterSpeed);
 			shootRear.Set(-shooterSpeed);
+			
+			armPosition = encoder.GetAverageVoltage()+1.1;
+			
+			if(armPosition>5){
+				armPosition -= 5;
+			}
 
+			switch (lifterStep) {
+
+			case 1:
+				//Extend Piston
+				lifterA.Set(true);
+				lifterB.Set(false);
+				break;
+
+			case 2:
+				//Turn motor down
+				targetPosition = 2.825;
+				break;
+
+			case 3:
+				//Start Suction
+				suctionA.Set(false);
+				suctionB.Set(true);
+				break;
+
+			case 4:
+				//Turn motor back
+				targetPosition = 3.34;
+				break;
+
+			case 5:
+				//Retract Piston
+				lifterA.Set(false);
+				lifterB.Set(true);
+				break;
+
+			case 6:
+				//Turn motor forward
+				targetPosition = 1.88;
+				break;
+
+			case 7:
+				//Extend Piston
+				lifterA.Set(true);
+				lifterB.Set(false);
+				break;
+
+			case 8:
+				//Turn motor up
+				targetPosition = .635;
+				break;
+
+			case 9:
+				//Release suction
+				suctionA.Set(true);
+				suctionB.Set(false);
+				break;
+
+			case 10:
+				//Retract piston
+				lifterA.Set(false);
+				lifterB.Set(true);
+				break;
+
+			default:
+				lifterStart = false;
+				lifterStep = 0;
+				targetPosition = 3.34;
+				//Return back to starting position
+			}
+			
+			if(armPosition < targetPosition){
+				jagWindowMotor.Set(.35);
+			} else if(armPosition > targetPosition){
+				jagWindowMotor.Set(-.35);
+			}
+			
+			if (joystick.GetRawButton(5)) {
+				lifterStart = true;
+			}
+
+			if (joystick.GetRawButton(7)) {
+				lifterStep = 0;
+			}
+
+			if (lifterStart && timer.Get() > 2) {
+				timer.Reset();
+				timer.Start();
+				lifterStep++;
+			}
+		
 			//Diagnostics output
 			//printf("x: %f y: %f phi: %f\n", leftJoyX, leftJoyY, phi);
 			//printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			//printf("theta: %f radius: %f\n", theta, radius);
 			
 			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Throttle: %f", shooterSpeed);
+			dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Voltage: %3.2f", armPosition);
+			dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Timer: %f", timer.Get());
+			dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Step: %d", lifterStep);
 			dsLCD->UpdateLCD();
 			Watchdog().Feed();
 		}

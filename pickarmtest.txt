@@ -1,0 +1,45 @@
+#include "WPILib.h"
+
+class DefaultRobot : public SimpleRobot {
+	Joystick joystick;
+	CANJaguar jagWindowMotor;
+	AnalogChannel encoder;
+	Timer timer;
+	
+public:
+	DefaultRobot(void):
+		joystick(1),
+		jagWindowMotor(4),
+		encoder(1)
+		{
+			Watchdog().SetExpiration(1);
+			
+		}
+	
+	void Autonomous(void){
+		
+	}
+	
+	void OperatorControl(void){
+		Watchdog().SetEnabled(true);
+		timer.Start();
+		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
+		while(IsOperatorControl()){
+			if(joystick.GetRawButton(1)){
+				jagWindowMotor.Set(.25);
+			}else if(joystick.GetRawButton(4)){
+				jagWindowMotor.Set(-.25);
+			}else{
+				jagWindowMotor.Set(0);
+			}
+			if(joystick.GetRawButton(3)){
+				timer.Reset();
+			}
+			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Timer: %f", timer.Get());
+			dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Voltage: %3.2f", encoder.GetAverageVoltage());
+			dsLCD->UpdateLCD();
+		}
+	}
+};
+
+START_ROBOT_CLASS(DefaultRobot);
