@@ -22,6 +22,9 @@ class DefaultRobot: public SimpleRobot {
 	Solenoid lifterA;
 	Solenoid lifterB;
 	AnalogChannel encoder;
+	AnalogChannel pValue;
+	AnalogChannel iValue;
+	AnalogChannel dValue;
 	Compressor compressor;
 	Timer timer;
 	int lifterStep;
@@ -68,6 +71,9 @@ public:
 		lifterA(7),
 		lifterB(8),
 		encoder(1),
+		pValue(2),
+		iValue(3),
+		dValue(4),
 		compressor(1, 1)
 	{
 		Watchdog().SetExpiration(1);
@@ -83,31 +89,31 @@ public:
 		Watchdog().SetEnabled(true);
 		timer.Start();
 		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
-		/*
+		
 		jagA.ChangeControlMode(jagA.kSpeed);
-		jagA.ConfigEncoderCodesPerRev(360);
-		jagA.EnableControl();
-		jagA.ChangeControlMode(jagA.kPercentVbus);
-		jagA.EnableControl();
-		Watchdog().Feed();
-		jagA.ChangeControlMode(jagB.kSpeed);
-		jagA.ConfigEncoderCodesPerRev(360);
-		jagA.EnableControl();
-		jagA.ChangeControlMode(jagB.kPercentVbus);
+		jagA.ConfigEncoderCodesPerRev(250);
+		jagA.SetSpeedReference(CANJaguar::kSpeedRef_Encoder);
+		//jagA.SetPID(1.0,1.0,1.0);
 		jagA.EnableControl();
 		Watchdog().Feed();
-		jagA.ChangeControlMode(jagC.kSpeed);
-		jagA.ConfigEncoderCodesPerRev(360);
-		jagA.EnableControl();
-		jagA.ChangeControlMode(jagC.kPercentVbus);
-		jagA.EnableControl();
+		jagB.ChangeControlMode(jagB.kSpeed);
+		jagB.ConfigEncoderCodesPerRev(250);
+		jagB.SetSpeedReference(CANJaguar::kSpeedRef_Encoder);
+		//jagB.SetPID(1.0,1.0,1.0);
+		jagB.EnableControl();
 		Watchdog().Feed();
-		jagA.ChangeControlMode(jagD.kSpeed);
-		jagA.ConfigEncoderCodesPerRev(360);
-		jagA.EnableControl();
-		jagA.ChangeControlMode(jagD.kPercentVbus);
-		jagA.EnableControl();
-		*/
+		jagC.ChangeControlMode(jagC.kSpeed);
+		jagC.ConfigEncoderCodesPerRev(250);
+		jagC.SetSpeedReference(CANJaguar::kSpeedRef_Encoder);
+		//jagC.SetPID(1.0,1.0,1.0);
+		jagC.EnableControl();
+		Watchdog().Feed();
+		jagD.ChangeControlMode(jagD.kSpeed);
+		jagD.ConfigEncoderCodesPerRev(250);
+		jagD.SetSpeedReference(CANJaguar::kSpeedRef_Encoder	);
+		//jagD.SetPID(1.0,1.0,1.0);
+		jagD.EnableControl();
+		
 		Watchdog().Feed();
 		shooterSpeed = 0.0;
 		lifterStep = 0;
@@ -116,12 +122,28 @@ public:
 		lifterStart = false;
 		
 		while (IsOperatorControl()) {
+			if(-.1 < joystick.GetRawAxis(3) && (joystick.GetRawAxis(3) < .1)){
+				phi = 0;
+			}else{
+				phi = joystick.GetRawAxis(3);
+			}
 			
-			phi = joystick.GetRawAxis(3);
 			leftJoyX = joystick.GetRawAxis(1);
 			leftJoyY = -joystick.GetRawAxis(2);
 			radius = sqrt(pow(leftJoyX, 2) + pow(leftJoyY, 2));
-
+			
+			jagA.DisableControl();
+			jagA.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
+			jagA.EnableControl();
+			jagB.DisableControl();
+			jagB.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
+			jagB.EnableControl();
+			jagC.DisableControl();
+			jagC.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
+			jagC.EnableControl();
+			jagD.DisableControl();
+			jagD.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
+			jagD.EnableControl();
 			//Left joystick strafe tolerance
 			if ((-.1 < leftJoyX) && (leftJoyX < .1)) {
 				leftJoyX = 0;
@@ -179,37 +201,37 @@ public:
 			
 			
 			//Power equations
-			outA = ((radius) * (sin(theta + (PI / 4))) + phi);
-			outB = ((radius) * (cos(theta + (PI / 4))) + phi);
-			outC = ((radius) * (cos(theta + (PI / 4))) - phi);
-			outD = ((radius) * (sin(theta + (PI / 4))) - phi);
+			outA = ((radius) * (sin(theta + (PI / 4))) + phi) * 275;
+			outB = ((radius) * (cos(theta + (PI / 4))) + phi) * 275;
+			outC = ((radius) * (cos(theta + (PI / 4))) - phi) * 275;
+			outD = ((radius) * (sin(theta + (PI / 4))) - phi) * 275;
 
 			//Output to motors
-			if (outA > 1) {
-				jagA.Set(-1);
-			} else if (outA < -1) {
-				jagA.Set(1);
+			if (outA > 275) {
+				jagA.Set(-275);
+			} else if (outA < -275) {
+				jagA.Set(275);
 			} else {
 				jagA.Set(-outA);
 			}
-			if (outB > 1) {
-				jagB.Set(-1);
-			} else if (outB < -1) {
-				jagB.Set(1);
+			if (outB > 275) {
+				jagB.Set(-275);
+			} else if (outB < -275) {
+				jagB.Set(275);
 			} else {
 				jagB.Set(-outB);
 			}
-			if (outC > 1) {
-				jagC.Set(1);
-			} else if (outC < -1) {
-				jagC.Set(-1);
+			if (outC > 275) {
+				jagC.Set(275);
+			} else if (outC < -275) {
+				jagC.Set(-275);
 			} else {
 				jagC.Set(outC);
 			}
-			if (outD > 1) {
-				jagD.Set(1);
-			} else if (outD < -1) {
-				jagD.Set(-1);
+			if (outD > 275) {
+				jagD.Set(275);
+			} else if (outD < -275) {
+				jagD.Set(-275);
 			} else {
 				jagD.Set(outD);
 			}
@@ -367,10 +389,18 @@ public:
 			//printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			//printf("theta: %f radius: %f\n", theta, radius);
 			
-			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Throttle: %f", shooterSpeed);
-			dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Voltage: %3.2f", armPosition);
-			dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Timer: %f", timer.Get());
-			dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Step: %d", lifterStep);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Throttle: %f", shooterSpeed);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Voltage: %3.2f", armPosition);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Timer: %f", timer.Get());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Step: %d", lifterStep);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Motor A speed: %f", jagA.GetSpeed());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Motor B speed: %f", jagB.GetSpeed());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Motor C speed: %f", jagC.GetSpeed());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Motor D speed: %f", jagD.GetSpeed());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "Target Position: %d", targetPosition);
+			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "P Value: %f", pValue.GetAverageVoltage());
+			dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "I Value: %f", iValue.GetAverageVoltage());
+			dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "D Value: %f", dValue.GetAverageVoltage());
 			dsLCD->UpdateLCD();
 			Watchdog().Feed();
 		}
