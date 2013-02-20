@@ -25,6 +25,7 @@ class DefaultRobot: public SimpleRobot {
 	AnalogChannel pValue;
 	AnalogChannel iValue;
 	AnalogChannel dValue;
+	PIDController PIDControl;
 	Compressor compressor;
 	Timer timer;
 	int lifterStep;
@@ -53,6 +54,7 @@ public:
 		 * 
 		 * hopper gate solenoid have placeholder values
 		 */
+		
 		joystick(1), 
 		joystick2(2),
 		jagA(11), //invert
@@ -75,10 +77,11 @@ public:
 		iValue(3),
 		dValue(4),
 		compressor(1, 1)
+		
+	
 	{
 		Watchdog().SetExpiration(1);
-		compressor.Start();
-		
+		compressor.Start();	
 	}
 
 	void Autonomous(void) {
@@ -89,29 +92,32 @@ public:
 		Watchdog().SetEnabled(true);
 		timer.Start();
 		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
-		
+		PIDController(1.37, 0.0, 5.0, &encoder, &jagWindowMotor, .05);
+		double ptemp=3.0;
+		double itemp=0.0;
+		double dtemp=0.0;
 		jagA.ChangeControlMode(jagA.kSpeed);
 		jagA.ConfigEncoderCodesPerRev(250);
 		jagA.SetSpeedReference(CANJaguar::kSpeedRef_Encoder);
-		//jagA.SetPID(1.0,1.0,1.0);
+		jagA.SetPID(1.37,0.0,5);
 		jagA.EnableControl();
 		Watchdog().Feed();
 		jagB.ChangeControlMode(jagB.kSpeed);
 		jagB.ConfigEncoderCodesPerRev(250);
 		jagB.SetSpeedReference(CANJaguar::kSpeedRef_Encoder);
-		//jagB.SetPID(1.0,1.0,1.0);
+		jagB.SetPID(1.37,0.0,5);
 		jagB.EnableControl();
 		Watchdog().Feed();
 		jagC.ChangeControlMode(jagC.kSpeed);
 		jagC.ConfigEncoderCodesPerRev(250);
 		jagC.SetSpeedReference(CANJaguar::kSpeedRef_Encoder);
-		//jagC.SetPID(1.0,1.0,1.0);
+		jagC.SetPID(1.37,0.0,5);
 		jagC.EnableControl();
 		Watchdog().Feed();
 		jagD.ChangeControlMode(jagD.kSpeed);
 		jagD.ConfigEncoderCodesPerRev(250);
 		jagD.SetSpeedReference(CANJaguar::kSpeedRef_Encoder	);
-		//jagD.SetPID(1.0,1.0,1.0);
+		jagD.SetPID(1.37,0.0,5);
 		jagD.EnableControl();
 		
 		Watchdog().Feed();
@@ -132,18 +138,24 @@ public:
 			leftJoyY = -joystick.GetRawAxis(2);
 			radius = sqrt(pow(leftJoyX, 2) + pow(leftJoyY, 2));
 			
-			jagA.DisableControl();
-			jagA.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
-			jagA.EnableControl();
-			jagB.DisableControl();
-			jagB.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
-			jagB.EnableControl();
-			jagC.DisableControl();
-			jagC.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
-			jagC.EnableControl();
-			jagD.DisableControl();
-			jagD.SetPID(pValue.GetAverageVoltage(),iValue.GetAverageVoltage(),dValue.GetAverageVoltage());
-			jagD.EnableControl();
+			//i must be 0 or negative!!!
+			if(joystick2.GetRawButton(5)){
+				ptemp = pValue.GetAverageVoltage();
+				itemp = iValue.GetAverageVoltage();
+				dtemp = dValue.GetAverageVoltage();
+				jagA.DisableControl();
+				jagA.SetPID(ptemp, itemp, dtemp);
+				jagA.EnableControl();
+				jagB.DisableControl();
+				jagB.SetPID(ptemp, itemp, dtemp);
+				jagB.EnableControl();
+				jagC.DisableControl();
+				jagC.SetPID(ptemp, itemp, dtemp);
+				jagC.EnableControl();
+				jagD.DisableControl();
+				jagD.SetPID(ptemp, itemp, dtemp);
+				jagD.EnableControl();
+			}
 			//Left joystick strafe tolerance
 			if ((-.1 < leftJoyX) && (leftJoyX < .1)) {
 				leftJoyX = 0;
@@ -235,6 +247,8 @@ public:
 			} else {
 				jagD.Set(outD);
 			}
+			
+			//Wait(.05);
 			
 			//Pneumatics
 			if(joystick.GetRawButton(6)){
@@ -365,10 +379,11 @@ public:
 			}
 			
 			if(armPosition < targetPosition){
-				jagWindowMotor.Set(.35);
+				jagWindowMotor.Set(.2);
 			} else if(armPosition > targetPosition){
-				jagWindowMotor.Set(-.35);
+				jagWindowMotor.Set(-.2);
 			}
+			
 			
 			if (joystick.GetRawButton(5)) {
 				lifterStart = true;
@@ -401,6 +416,9 @@ public:
 			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "P Value: %f", pValue.GetAverageVoltage());
 			dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "I Value: %f", iValue.GetAverageVoltage());
 			dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "D Value: %f", dValue.GetAverageVoltage());
+			dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "pTemp: %f", ptemp);
+			dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "iTemp: %f", itemp);
+			dsLCD->Printf(DriverStationLCD::kUser_Line6, 1, "dTemp: %f", dtemp);
 			dsLCD->UpdateLCD();
 			Watchdog().Feed();
 		}
