@@ -25,8 +25,8 @@ class DefaultRobot: public SimpleRobot {
 	AnalogChannel pValue;
 	AnalogChannel iValue;
 	AnalogChannel dValue;
-	PIDController PIDControl;
 	Compressor compressor;
+	PIDController PIDControl;
 	Timer timer;
 	int lifterStep;
 	double theta;
@@ -76,7 +76,8 @@ public:
 		pValue(2),
 		iValue(3),
 		dValue(4),
-		compressor(1, 1)
+		compressor(1, 1),
+		PIDControl(1.37, 0.0, 5.0, &encoder, &jagWindowMotor, .05)
 		
 	
 	{
@@ -92,7 +93,10 @@ public:
 		Watchdog().SetEnabled(true);
 		timer.Start();
 		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
-		PIDController(1.37, 0.0, 5.0, &encoder, &jagWindowMotor, .05);
+		PIDControl.SetContinuous(false);
+		PIDControl.SetInputRange(0 , 5);
+		PIDControl.SetOutputRange(-.5, .5);
+		PIDControl.Enable();
 		double ptemp=3.0;
 		double itemp=0.0;
 		double dtemp=0.0;
@@ -306,7 +310,7 @@ public:
 			}
 			shootFront.Set(-shooterSpeed);
 			shootRear.Set(-shooterSpeed);
-			
+			/*
 			armPosition = encoder.GetAverageVoltage()+1.1;
 			
 			if(armPosition>5){
@@ -378,11 +382,7 @@ public:
 				//Return back to starting position
 			}
 			
-			if(armPosition < targetPosition){
-				jagWindowMotor.Set(.2);
-			} else if(armPosition > targetPosition){
-				jagWindowMotor.Set(-.2);
-			}
+			PIDControl.SetSetpoint(targetPosition);
 			
 			
 			if (joystick.GetRawButton(5)) {
@@ -398,27 +398,32 @@ public:
 				timer.Start();
 				lifterStep++;
 			}
-		
+			*/
 			//Diagnostics output
 			//printf("x: %f y: %f phi: %f\n", leftJoyX, leftJoyY, phi);
 			//printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
 			//printf("theta: %f radius: %f\n", theta, radius);
 			
-			//dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Throttle: %f", shooterSpeed);
-			//dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Voltage: %3.2f", armPosition);
-			//dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Timer: %f", timer.Get());
-			//dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Step: %d", lifterStep);
+			//normal debug output (in competition) shooter and lifter info feedback
+			//dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "Shooter Speed: %f", shooterSpeed);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Current Position: %3.2f", encoder.GetAverageVoltage());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Target Position: %3.2f", targetPosition);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Lifter Timer: %f", timer.Get());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Lifter Step: %d of 11", lifterStep);
+			
+			//drive debug info, uncomment as needed.
 			//dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Motor A speed: %f", jagA.GetSpeed());
 			//dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "Motor B speed: %f", jagB.GetSpeed());
 			//dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "Motor C speed: %f", jagC.GetSpeed());
 			//dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "Motor D speed: %f", jagD.GetSpeed());
 			//dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "Target Position: %d", targetPosition);
-			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "P Value: %f", pValue.GetAverageVoltage());
-			dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "I Value: %f", iValue.GetAverageVoltage());
-			dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "D Value: %f", dValue.GetAverageVoltage());
-			dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "pTemp: %f", ptemp);
-			dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "iTemp: %f", itemp);
-			dsLCD->Printf(DriverStationLCD::kUser_Line6, 1, "dTemp: %f", dtemp);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "P Value: %f", pValue.GetAverageVoltage());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "I Value: %f", iValue.GetAverageVoltage());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "D Value: %f", dValue.GetAverageVoltage());
+			//dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "pTemp: %f", ptemp);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "iTemp: %f", itemp);
+			//dsLCD->Printf(DriverStationLCD::kUser_Line6, 1, "dTemp: %f", dtemp);
+			dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Throttle: %f", shooterSpeed);
 			dsLCD->UpdateLCD();
 			Watchdog().Feed();
 		}
