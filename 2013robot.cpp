@@ -26,7 +26,6 @@ class DefaultRobot: public SimpleRobot {
 	AnalogChannel iValue;
 	AnalogChannel dValue;
 	Compressor compressor;
-	PIDController PIDControl;
 	Timer timer;
 	int lifterStep;
 	double theta;
@@ -76,8 +75,7 @@ public:
 		pValue(2),
 		iValue(3),
 		dValue(4),
-		compressor(1, 1),
-		PIDControl(1.37, 0.0, 5.0, &encoder, &jagWindowMotor, .05)
+		compressor(1, 1)
 		
 	
 	{
@@ -93,10 +91,6 @@ public:
 		Watchdog().SetEnabled(true);
 		timer.Start();
 		DriverStationLCD *dsLCD = DriverStationLCD::GetInstance();
-		PIDControl.SetContinuous(false);
-		PIDControl.SetInputRange(0 , 5);
-		PIDControl.SetOutputRange(-.5, .5);
-		PIDControl.Enable();
 		double ptemp=3.0;
 		double itemp=0.0;
 		double dtemp=0.0;
@@ -310,12 +304,9 @@ public:
 			}
 			shootFront.Set(-shooterSpeed);
 			shootRear.Set(-shooterSpeed);
-			/*
-			armPosition = encoder.GetAverageVoltage()+1.1;
 			
-			if(armPosition>5){
-				armPosition -= 5;
-			}
+			armPosition = encoder.GetAverageVoltage()+2.5;
+
 
 			switch (lifterStep) {
 
@@ -327,7 +318,7 @@ public:
 
 			case 2:
 				//Turn motor down
-				targetPosition = 2.825;
+				jagWindowMotor.Set(-armPosition);
 				break;
 
 			case 3:
@@ -338,7 +329,6 @@ public:
 
 			case 4:
 				//Turn motor back
-				targetPosition = 3.34;
 				break;
 
 			case 5:
@@ -349,7 +339,6 @@ public:
 
 			case 6:
 				//Turn motor forward
-				targetPosition = 1.88;
 				break;
 
 			case 7:
@@ -360,7 +349,6 @@ public:
 
 			case 8:
 				//Turn motor up
-				targetPosition = .635;
 				break;
 
 			case 9:
@@ -377,12 +365,9 @@ public:
 
 			default:
 				lifterStart = false;
-				lifterStep = 0;
-				targetPosition = 3.34;
+				lifterStep = 1;
 				//Return back to starting position
 			}
-			
-			PIDControl.SetSetpoint(targetPosition);
 			
 			
 			if (joystick.GetRawButton(5)) {
@@ -398,7 +383,6 @@ public:
 				timer.Start();
 				lifterStep++;
 			}
-			*/
 			//Diagnostics output
 			//printf("x: %f y: %f phi: %f\n", leftJoyX, leftJoyY, phi);
 			//printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
