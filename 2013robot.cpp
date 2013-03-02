@@ -40,6 +40,9 @@ class DefaultRobot: public SimpleRobot {
 	double shooterSpeed;
 	double armPosition;
 	double targetPosition;
+	double armPositionTrans;
+	double targetSpeed;
+	double motorSpeed;
 	bool button3Pressed;
 	bool button2Pressed;
 	bool lifterStart;
@@ -305,9 +308,17 @@ public:
 			shootFront.Set(-shooterSpeed);
 			shootRear.Set(-shooterSpeed);
 			
-			armPosition = encoder.GetAverageVoltage()+2.5;
-
-
+			armPosition = encoder.GetAverageVoltage();
+			
+			armPosition += (2.5-targetPosition);
+			
+			if(armPosition>5){
+				armPosition-=5;		
+			}else if(armPosition<0){
+				armPosition+=5;
+			}
+			motorSpeed = (armPosition-2.5)/2.5;
+			
 			switch (lifterStep) {
 
 			case 1:
@@ -318,7 +329,8 @@ public:
 
 			case 2:
 				//Turn motor down
-				jagWindowMotor.Set(-armPosition);
+				jagWindowMotor.Set(motorSpeed);
+				
 				break;
 
 			case 3:
