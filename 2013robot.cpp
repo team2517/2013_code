@@ -307,7 +307,7 @@ public:
 			}
 			shootFront.Set(-shooterSpeed);
 			shootRear.Set(-shooterSpeed);
-			
+			/*
 			armPosition = encoder.GetAverageVoltage();
 			
 			armPosition += (2.5-targetPosition);
@@ -395,6 +395,7 @@ public:
 				timer.Start();
 				lifterStep++;
 			}
+			*/
 			//Diagnostics output
 			//printf("x: %f y: %f phi: %f\n", leftJoyX, leftJoyY, phi);
 			//printf("a: %f b: %f c: %f d: %f\n", jagA.Get(), jagB.Get(), jagC.Get(), jagD.Get());
