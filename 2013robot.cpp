@@ -1,5 +1,6 @@
 #include "WPIlib.h"
 #include "Math.h"
+#include <time.h>
 #define PI 3.14159265
 
 
@@ -87,7 +88,20 @@ public:
 	}
 
 	void Autonomous(void) {
-
+		shootFront.Set(.2);
+		shootRear.Set(.2);
+		for (int i=0; i<=2;i++){
+			sleep(3);
+			loaderA.Set(true);
+			loaderB.Set(false);
+			sleep(1);
+			loaderA.Set(false);
+			loaderB.Set(true);
+		}
+		
+		
+		
+		
 	}
 
 	void OperatorControl(void) {
@@ -282,7 +296,7 @@ public:
 				suctionB.Set(true);
 			}
 			*/
-			//Shooter
+			//Shooter - comment out for pickup arm test
 			
 			if(joystick.GetRawButton(3) && shooterSpeed < 1 && button3Pressed == false){
 				shooterSpeed += .1;
@@ -307,6 +321,8 @@ public:
 			}
 			shootFront.Set(-shooterSpeed);
 			shootRear.Set(-shooterSpeed);
+			
+			//Pickup arm test
 			/*
 			armPosition = encoder.GetAverageVoltage();
 			
