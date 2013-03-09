@@ -44,6 +44,7 @@ class DefaultRobot: public SimpleRobot {
 	double armPositionTrans;
 	double targetSpeed;
 	double motorSpeed;
+	double maxPower;
 	bool button3Pressed;
 	bool button2Pressed;
 	bool lifterStart;
@@ -88,20 +89,9 @@ public:
 	}
 
 	void Autonomous(void) {
-		shootFront.Set(.2);
-		shootRear.Set(.2);
-		for (int i=0; i<=2;i++){
-			sleep(3);
-			loaderA.Set(true);
-			loaderB.Set(false);
-			sleep(1);
-			loaderA.Set(false);
-			loaderB.Set(true);
-		}
-		
-		
-		
-		
+		Watchdog().SetEnabled(false);
+		shootFront.Set(.3);
+		shootRear.Set(.3);
 	}
 
 	void OperatorControl(void) {
@@ -137,6 +127,7 @@ public:
 		
 		Watchdog().Feed();
 		shooterSpeed = 0.0;
+		maxPower = 275;
 		lifterStep = 0;
 		button3Pressed = false;
 		button2Pressed = false;
@@ -228,37 +219,37 @@ public:
 			
 			
 			//Power equations
-			outA = ((radius) * (sin(theta + (PI / 4))) + phi) * 275;
-			outB = ((radius) * (cos(theta + (PI / 4))) + phi) * 275;
-			outC = ((radius) * (cos(theta + (PI / 4))) - phi) * 275;
-			outD = ((radius) * (sin(theta + (PI / 4))) - phi) * 275;
+			outA = ((radius) * (sin(theta + (PI / 4))) + phi) * maxPower;
+			outB = ((radius) * (cos(theta + (PI / 4))) + phi) * maxPower;
+			outC = ((radius) * (cos(theta + (PI / 4))) - phi) * maxPower;
+			outD = ((radius) * (sin(theta + (PI / 4))) - phi) * maxPower;
 
 			//Output to motors
-			if (outA > 275) {
-				jagA.Set(-275);
-			} else if (outA < -275) {
-				jagA.Set(275);
+			if (outA > maxPower) {
+				jagA.Set(-maxPower);
+			} else if (outA < -maxPower) {
+				jagA.Set(maxPower);
 			} else {
 				jagA.Set(-outA);
 			}
-			if (outB > 275) {
-				jagB.Set(-275);
-			} else if (outB < -275) {
-				jagB.Set(275);
+			if (outB > maxPower) {
+				jagB.Set(-maxPower);
+			} else if (outB < -maxPower) {
+				jagB.Set(maxPower);
 			} else {
 				jagB.Set(-outB);
 			}
-			if (outC > 275) {
-				jagC.Set(275);
-			} else if (outC < -275) {
-				jagC.Set(-275);
+			if (outC > maxPower) {
+				jagC.Set(maxPower);
+			} else if (outC < -maxPower) {
+				jagC.Set(-maxPower);
 			} else {
 				jagC.Set(outC);
 			}
-			if (outD > 275) {
-				jagD.Set(275);
-			} else if (outD < -275) {
-				jagD.Set(-275);
+			if (outD > maxPower) {
+				jagD.Set(maxPower);
+			} else if (outD < -maxPower) {
+				jagD.Set(-maxPower);
 			} else {
 				jagD.Set(outD);
 			}
@@ -323,6 +314,14 @@ public:
 			shootRear.Set(-shooterSpeed);
 			
 			//Pickup arm test
+			/*
+			if(joystick.GetRawButton(1)){
+				jagWindowMotor.Set(.1);
+			}
+			if(joystick.GetRawButton(2)){
+				jagWindowMotor.Set(.2);
+			}
+			*/
 			/*
 			armPosition = encoder.GetAverageVoltage();
 			
